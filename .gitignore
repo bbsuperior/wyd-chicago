@@ -1,0 +1,34 @@
+# --- Secrets / Firebase ---
+# Web Firebase config keys are PUBLIC by design and CAN be committed (firebase-config.js),
+# but service-account keys and admin SDK creds must never be:
+**/serviceAccountKey.json
+**/*-firebase-adminsdk-*.json
+.firebaserc.local
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# iOS — Firebase plist holds the app's config (low-sensitivity but project-specific): keep local
+ios/**/GoogleService-Info.plist
+
+# --- Node / Cloud Functions ---
+node_modules/
+firebase/functions/lib/
+npm-debug.log*
+yarn-error.log*
+.env
+.env.*
+
+# --- Xcode ---
+ios/build/
+ios/DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+.DS_Store
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+*.swp
+Thumbs.db

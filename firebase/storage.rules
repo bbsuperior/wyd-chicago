@@ -1,0 +1,56 @@
+rules_version = '2';
+
+// WYD Chicago — Cloud Storage security rules
+// Event cover images live under  event_covers/{eventId}/**
+// User avatars live under        avatars/{uid}/**
+//
+// Public read for assets (the feed shows them to everyone). Writes are limited
+// to the owner or an admin, capped at 8MB, image content-types only.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // Hosts (and admins) may upload event covers.
+    function isHostClaim() {
+      return isSignedIn() &&
+        (request.auth.token.host == true || request.auth.token.admin == true);
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // <= 8MB and an image/* content type.
+    function isValidImage() {
+      return request.resource.size < 8 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+    }
+
+    // ---- event cover images --------------------------------------------
+    // Public read so the feed renders for everyone. Only admins/hosts may write.
+    match /event_covers/{eventId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if (isAdmin() || isHostClaim()) && isValidImage();
+    }
+
+    // ---- avatars --------------------------------------------------------
+    // Public read (profiles/avatars are shown in attendee lists). Only the
+    // owning user (or an admin) may write their own avatar.
+    match /avatars/{uid}/{allPaths=**} {
+      allow read: if true;
+      allow write: if (isOwner(uid) || isAdmin()) && isValidImage();
+    }
+
+    // Everything else is denied by default.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

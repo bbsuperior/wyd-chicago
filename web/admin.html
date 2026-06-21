@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>WYD Chicago — Admin (master login)</title>
+    <meta
+      name="description"
+      content="WYD Chicago admin dashboard — create, edit, publish, and cancel events and review reports."
+    />
+    <meta name="theme-color" content="#0B0B12" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+
+    <!-- Google Fonts: Space Grotesk (display) + Inter (body) — same as the app -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- The whole design system lives here; reuse its tokens + components. -->
+    <link rel="stylesheet" href="css/app.css" />
+
+    <!-- Only small admin-specific layout tweaks; everything else reuses app.css. -->
+    <style>
+      .admin-shell {
+        max-width: var(--col);
+        margin: 0 auto;
+        padding: 0 16px calc(var(--tabbar-h) + 32px);
+      }
+      .admin-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: var(--bar-h);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(11, 11, 18, 0.82);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 16px;
+      }
+      .admin-bar .spacer {
+        flex: 1;
+      }
+      .admin-badge {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 4px 9px;
+        border-radius: var(--r-pill);
+        color: #fff;
+        background: var(--grad-city);
+        box-shadow: var(--glow-brand);
+      }
+      /* A plain surface card for grouping admin sections (mirrors .auth-card vibe). */
+      .admin-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-card);
+        padding: 18px;
+        margin-bottom: 18px;
+        box-shadow: var(--shadow-card);
+      }
+      .admin-card > h2 {
+        font-size: 20px;
+        margin-bottom: 4px;
+      }
+      .admin-card > .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 14px;
+      }
+      /* Two-up rows for compact form fields. Collapses on narrow screens. */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 12px;
+      }
+      @media (max-width: 480px) {
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .field .hint {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      /* Multi-select tag picker reuses .chip; active state = selected. */
+      .pick-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      /* Event rows in the admin list. */
+      .ev-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .ev-row:last-child {
+        border-bottom: 0;
+      }
+      .ev-thumb {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        object-fit: cover;
+        flex: 0 0 auto;
+        background: var(--surface-2);
+      }
+      .ev-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .ev-main .t {
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .ev-main .s {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 2px;
+      }
+      .ev-actions {
+        display: flex;
+        gap: 6px;
+        flex: 0 0 auto;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      /* Status pills. */
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: var(--r-pill);
+        text-transform: capitalize;
+      }
+      .status-pill.published {
+        background: rgba(46, 230, 166, 0.14);
+        color: var(--success);
+      }
+      .status-pill.draft {
+        background: rgba(154, 154, 176, 0.16);
+        color: var(--muted);
+      }
+      .status-pill.cancelled {
+        background: rgba(255, 90, 90, 0.14);
+        color: var(--danger);
+      }
+      .count-chip {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      /* Report rows. */
+      .report-row {
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .report-row:last-child {
+        border-bottom: 0;
+      }
+      .report-row .meta {
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 4px;
+      }
+      .admin-login {
+        max-width: 420px;
+        margin: 8vh auto 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-shell">
+      <!-- Top bar: WYD logo + an Admin badge. Rendered statically; admin.js
+           injects the dashboard / login gate into #admin below. -->
+      <header class="admin-bar" id="admin-bar"></header>
+
+      <!-- Sign-in gate + dashboard render here. -->
+      <div id="admin"></div>
+    </div>
+
+    <!-- Toasts (reuses showToast from ui.js). -->
+    <div id="toast" aria-live="polite" aria-atomic="true"></div>
+
+    <noscript>
+      <p style="padding: 24px; color: #f5f5fa; font-family: sans-serif">
+        The WYD Chicago admin dashboard needs JavaScript turned on.
+      </p>
+    </noscript>
+
+    <script type="module" src="js/admin.js"></script>
+  </body>
+</html>

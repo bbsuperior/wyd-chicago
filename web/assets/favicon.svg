@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="WYD Chicago">
+  <defs>
+    <linearGradient id="wyd" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5B8CFF"/>
+      <stop offset="0.55" stop-color="#C44CFF"/>
+      <stop offset="1" stop-color="#FF4D6D"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="#0B0B12"/>
+  <!-- Chicago six-pointed star (hexagram) in the city-night gradient -->
+  <path d="M32 9 L52.8 45 L11.2 45 Z M32 55 L11.2 19 L52.8 19 Z"
+        fill="url(#wyd)" fill-rule="evenodd"/>
+</svg>

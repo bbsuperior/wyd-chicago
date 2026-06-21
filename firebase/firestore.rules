@@ -1,0 +1,151 @@
+rules_version = '2';
+
+// WYD Chicago — Firestore security rules
+// Enforces the §4 data model + §8 safety rules from PROJECT_CANON.md.
+//
+// Core ideas:
+//  - Anyone signed in can READ published events + tags.
+//  - Only admins, or the event's host/creator, can create/update events.
+//  - A user owns ONLY their own users/{uid} doc and friends subcollection.
+//  - RSVP (attendees) and voting (votes) require a VERIFIED email.
+//  - exactAddress is NEVER stored on the public event doc. It lives at
+//    events/{id}/private/location, readable only by admins + "going" attendees.
+//  - reports are create-only for any signed-in user; only admins can read them.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers --------------------------------------------------------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // "master login" — Firebase custom claim admin:true is the source of truth.
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // Mandatory email verification gate for RSVP / vote / comment.
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Hosts may create events; identified by a custom claim OR their profile role.
+    function isHostClaim() {
+      return isSignedIn() &&
+        (request.auth.token.host == true || request.auth.token.admin == true);
+    }
+
+    // The event a write targets is "owned" by the caller if they're the host or creator.
+    function ownsEventData(data) {
+      return isSignedIn() &&
+        (request.auth.uid == data.hostId || request.auth.uid == data.createdBy);
+    }
+
+    // ---- users ----------------------------------------------------------
+    // A user can read/write ONLY their own profile doc. Admins can read any
+    // profile (moderation). No one can fake another user's profile.
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid) || isAdmin();
+      allow delete: if isAdmin();
+
+      // friends subcollection — a user manages only their own friend entries.
+      match /friends/{friendUid} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow create, update, delete: if isOwner(uid);
+      }
+    }
+
+    // ---- tags -----------------------------------------------------------
+    // Public-ish reference data: any signed-in user can read; only admins write.
+    match /tags/{tagId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ---- events ---------------------------------------------------------
+    match /events/{eventId} {
+      // Read: published events are visible to anyone signed in. Drafts and
+      // cancelled events are visible only to admins or the host/creator.
+      allow read: if isSignedIn() && (
+        resource.data.status == 'published' ||
+        isAdmin() ||
+        ownsEventData(resource.data)
+      );
+
+      // Create: admins, or a host claiming themselves as host/creator.
+      // The public event doc must NEVER carry exactAddress (safety §8).
+      allow create: if (isAdmin() || (isHostClaim() && ownsEventData(request.resource.data)))
+        && !('exactAddress' in request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid;
+
+      // Update: admins, or the event's host/creator. Still no exactAddress
+      // on the public doc.
+      allow update: if (isAdmin() || ownsEventData(resource.data))
+        && !('exactAddress' in request.resource.data);
+
+      allow delete: if isAdmin();
+
+      // -- private location (exact address) ------------------------------
+      // Only admins and "going" attendees may read the exact address.
+      match /private/{docId} {
+        allow read: if isAdmin() || (
+          isSignedIn() &&
+          exists(/databases/$(database)/documents/events/$(eventId)/attendees/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/events/$(eventId)/attendees/$(request.auth.uid)).data.status == 'going'
+        );
+        // Only admins or the event host/creator may write the exact address.
+        allow write: if isAdmin() ||
+          (isSignedIn() &&
+           ownsEventData(get(/databases/$(database)/documents/events/$(eventId)).data));
+      }
+
+      // -- attendees (RSVP) ----------------------------------------------
+      // Anyone signed in can read who's going. A user can write ONLY their own
+      // RSVP doc, and ONLY if their email is verified.
+      match /attendees/{uid} {
+        allow read: if isSignedIn();
+        allow create, update: if isOwner(uid) && isVerified()
+          && request.resource.data.status in ['going', 'interested'];
+        allow delete: if isOwner(uid) || isAdmin();
+      }
+
+      // -- votes ----------------------------------------------------------
+      // A user can write ONLY their own vote, and ONLY if email-verified.
+      match /votes/{uid} {
+        allow read: if isSignedIn();
+        allow create, update: if isOwner(uid) && isVerified()
+          && request.resource.data.dir in [1, -1];
+        allow delete: if isOwner(uid) || isAdmin();
+      }
+
+      // -- comments -------------------------------------------------------
+      // Creatable only by email-verified users, and only as themselves.
+      // Authors can delete their own; admins can delete any (moderation).
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isVerified()
+          && request.resource.data.authorId == request.auth.uid;
+        allow update: if false; // comments are immutable
+        allow delete: if isOwner(resource.data.authorId) || isAdmin();
+      }
+    }
+
+    // ---- reports --------------------------------------------------------
+    // Any signed-in user can FILE a report (create-only). Reports are readable
+    // only by admins (the moderation queue). reporterId must be the caller.
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn()
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.status == 'open';
+      allow update, delete: if isAdmin();
+    }
+  }
+}

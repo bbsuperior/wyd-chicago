@@ -1,0 +1,25 @@
+[
+  { "id": "music",            "label": "Music",             "kind": "interest", "emoji": "🎵", "color": "#5B8CFF", "sort": 10 },
+  { "id": "sports",           "label": "Sports",            "kind": "interest", "emoji": "🏀", "color": "#2EE6A6", "sort": 20 },
+  { "id": "gaming",           "label": "Gaming",            "kind": "interest", "emoji": "🎮", "color": "#C44CFF", "sort": 30 },
+  { "id": "art",              "label": "Art",               "kind": "interest", "emoji": "🎨", "color": "#FF4D6D", "sort": 40 },
+  { "id": "food",             "label": "Food",              "kind": "interest", "emoji": "🍕", "color": "#FFC83D", "sort": 50 },
+  { "id": "dance",            "label": "Dance",             "kind": "interest", "emoji": "💃", "color": "#FF4D6D", "sort": 60 },
+  { "id": "study",            "label": "Study",             "kind": "interest", "emoji": "📚", "color": "#5B8CFF", "sort": 70 },
+  { "id": "fashion",          "label": "Fashion / Sneakers","kind": "interest", "emoji": "👟", "color": "#C44CFF", "sort": 80 },
+  { "id": "fundraiser-cause", "label": "Fundraiser / Charity","kind": "interest","emoji": "💖", "color": "#FF4D6D", "sort": 90 },
+  { "id": "outdoors",         "label": "Outdoors",          "kind": "interest", "emoji": "🌳", "color": "#2EE6A6", "sort": 100 },
+
+  { "id": "house-party",      "label": "House Party",       "kind": "eventType", "emoji": "🏠", "color": "#C44CFF", "sort": 200 },
+  { "id": "kickback",         "label": "Kickback",          "kind": "eventType", "emoji": "🛋️", "color": "#5B8CFF", "sort": 210 },
+  { "id": "concert",          "label": "Concert",           "kind": "eventType", "emoji": "🎤", "color": "#FF4D6D", "sort": 220 },
+  { "id": "sports-game",      "label": "Sports Game",       "kind": "eventType", "emoji": "🏀", "color": "#2EE6A6", "sort": 230 },
+  { "id": "open-mic",         "label": "Open Mic",          "kind": "eventType", "emoji": "🎙️", "color": "#FFC83D", "sort": 240 },
+  { "id": "fundraiser",       "label": "Fundraiser",        "kind": "eventType", "emoji": "💸", "color": "#FF4D6D", "sort": 250 },
+  { "id": "bonfire",          "label": "Bonfire",           "kind": "eventType", "emoji": "🔥", "color": "#FF4D6D", "sort": 260 },
+  { "id": "study-group",      "label": "Study Group",       "kind": "eventType", "emoji": "📖", "color": "#5B8CFF", "sort": 270 },
+  { "id": "art-show",         "label": "Art Show",          "kind": "eventType", "emoji": "🖼️", "color": "#C44CFF", "sort": 280 },
+  { "id": "day-party",        "label": "Day Party",         "kind": "eventType", "emoji": "☀️", "color": "#FFC83D", "sort": 290 },
+  { "id": "movie-night",      "label": "Movie Night",       "kind": "eventType", "emoji": "🎬", "color": "#5B8CFF", "sort": 300 },
+  { "id": "meetup",           "label": "Meetup",            "kind": "eventType", "emoji": "🤝", "color": "#2EE6A6", "sort": 310 }
+]
