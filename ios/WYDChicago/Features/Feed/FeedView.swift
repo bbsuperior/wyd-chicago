@@ -24,7 +24,10 @@ struct FeedView: View {
                 sortRow
 
                 if vm.isLoading && vm.events.isEmpty {
-                    ProgressView().tint(.wydBrand).padding(.top, 40)
+                    ForEach(0..<4, id: \.self) { i in
+                        SkeletonEventCard()
+                            .appear(delay: WYDMotion.stagger(i))
+                    }
                 } else if vm.events.isEmpty {
                     EmptyStateView(
                         emoji: "🌙",
@@ -106,18 +109,18 @@ struct FeedView: View {
             HStack(spacing: 8) {
                 ChipView(label: "Tonight", emoji: "🌙",
                          isSelected: vm.selectedWhen == "tonight") {
-                    vm.selectWhen("tonight")
+                    Haptics.select(); vm.selectWhen("tonight")
                 }
                 ChipView(label: "Weekend", emoji: "🎉",
                          isSelected: vm.selectedWhen == "weekend") {
-                    vm.selectWhen("weekend")
+                    Haptics.select(); vm.selectWhen("weekend")
                 }
                 Divider().frame(height: 22).overlay(Color.wydBorder)
                 ForEach(vm.eventTypeTags) { tag in
                     ChipView(label: tag.label, emoji: tag.emoji,
                              isSelected: vm.selectedType == tag.id,
                              accent: Color(hex: tag.color)) {
-                        vm.selectType(tag.id)
+                        Haptics.select(); vm.selectType(tag.id)
                     }
                 }
             }
@@ -132,11 +135,12 @@ struct FeedView: View {
             HStack(spacing: 8) {
                 ForEach(FeedSort.allCases) { s in
                     ChipView(label: s.label, isSelected: vm.sort == s, accent: .wydAccent) {
-                        vm.setSort(s)
+                        Haptics.select(); vm.setSort(s)
                     }
                 }
                 ChipView(label: "Friends going", emoji: "👥",
                          isSelected: vm.friendsOnly, accent: .wydSuccess) {
+                    Haptics.select()
                     vm.friendsOnly.toggle()
                     vm.runSearch()
                 }

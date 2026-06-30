@@ -6,6 +6,8 @@ struct EventDetailView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var vm: EventDetailViewModel
     @State private var didLoad = false
+    @State private var celebrate = 0
+    @State private var toast: ToastData?
 
     init(eventId: String) {
         _vm = StateObject(wrappedValue: EventDetailViewModel(eventId: eventId, backend: MockBackend()))
@@ -15,14 +17,14 @@ struct EventDetailView: View {
         ScrollView {
             if let event = vm.event {
                 VStack(alignment: .leading, spacing: 18) {
-                    cover(event)
-                    header(event)
-                    rsvpBar
-                    whenWhere(event)
-                    if !event.description.isEmpty { about(event) }
-                    attendeesSection
-                    commentsSection
-                    safetyRow(event)
+                    cover(event).appear(delay: 0.00, yOffset: 20)
+                    header(event).appear(delay: 0.06)
+                    rsvpBar.appear(delay: 0.12)
+                    whenWhere(event).appear(delay: 0.18)
+                    if !event.description.isEmpty { about(event).appear(delay: 0.24) }
+                    attendeesSection.appear(delay: 0.30)
+                    commentsSection.appear(delay: 0.36)
+                    safetyRow(event).appear(delay: 0.42)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 32)
@@ -37,9 +39,19 @@ struct EventDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { Task { await vm.toggleSave() } } label: {
+                Button {
+                    Task {
+                        await vm.toggleSave()
+                        if vm.errorMessage == nil {
+                            Haptics.tap()
+                            toast = vm.isSaved ? .info("Saved to your list") : .info("Removed from saved")
+                        }
+                    }
+                } label: {
                     Image(systemName: vm.isSaved ? "bookmark.fill" : "bookmark")
                         .foregroundColor(vm.isSaved ? .wydGold : .wydText)
+                        .scaleEffect(vm.isSaved ? 1.1 : 1)
+                        .animation(WYDMotion.bouncy, value: vm.isSaved)
                 }
             }
         }
@@ -64,6 +76,8 @@ struct EventDetailView: View {
         } message: {
             Text(vm.errorMessage ?? "")
         }
+        .overlay { ConfettiView(trigger: celebrate).ignoresSafeArea() }
+        .wydToast($toast)
     }
 
     // MARK: Sections
@@ -105,6 +119,7 @@ struct EventDetailView: View {
                     .foregroundColor(event.isFree ? .wydSuccess : .wydText)
             }
             VotePill(upvotes: event.upvotes, downvotes: event.downvotes, myVote: vm.myVote) { dir in
+                Haptics.tap()
                 Task { await vm.vote(dir) }
             }
         }
@@ -116,14 +131,30 @@ struct EventDetailView: View {
                 title: vm.myRsvp == .going ? "You're going 🎉" : "Going",
                 systemImage: vm.myRsvp == .going ? "checkmark" : "bolt.fill"
             ) {
-                Task { await vm.setRsvp(.going) }
+                let wasGoing = vm.myRsvp == .going
+                Task {
+                    await vm.setRsvp(.going)
+                    if vm.myRsvp == .going && !wasGoing {
+                        celebrate += 1
+                        Haptics.success()
+                        toast = .success("You're going 🎉 — address unlocked")
+                    } else if vm.errorMessage == nil {
+                        Haptics.select()
+                    }
+                }
             }
             SecondaryButton(
                 title: vm.myRsvp == .interested ? "Interested ★" : "Interested",
                 systemImage: nil,
                 tint: vm.myRsvp == .interested ? .wydGold : .wydText
             ) {
-                Task { await vm.setRsvp(.interested) }
+                Task {
+                    await vm.setRsvp(.interested)
+                    if vm.errorMessage == nil {
+                        Haptics.select()
+                        if vm.myRsvp == .interested { toast = .info("Marked interested ★") }
+                    }
+                }
             }
         }
     }
@@ -189,7 +220,9 @@ struct EventDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
                 .wydCardBackground(.wydSurface2)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
+            .animation(WYDMotion.snappy, value: vm.comments.count)
             HStack(spacing: 8) {
                 TextField("Add a comment…", text: $vm.commentDraft)
                     .font(WYDFont.body(15))
@@ -199,13 +232,16 @@ struct EventDetailView: View {
                     .overlay(RoundedRectangle(cornerRadius: WYDRadius.button).stroke(Color.wydBorder, lineWidth: 1))
                     .submitLabel(.send)
                     .onSubmit { Task { await vm.postComment() } }
-                Button { Task { await vm.postComment() } } label: {
+                Button {
+                    Haptics.tap()
+                    Task { await vm.postComment() }
+                } label: {
                     Image(systemName: "paperplane.fill")
                         .foregroundColor(.white)
                         .padding(11)
                         .background(Circle().fill(LinearGradient.cityNight))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
             }
         }
     }

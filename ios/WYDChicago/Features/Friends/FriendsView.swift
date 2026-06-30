@@ -20,7 +20,9 @@ struct FriendsView: View {
                     section("Add friends") {
                         ForEach(vm.searchResults) { user in
                             personRow(user, trailing: {
-                                Button { Task { await vm.addFriend(user) } } label: {
+                                Button {
+                                    Haptics.bump(); Task { await vm.addFriend(user) }
+                                } label: {
                                     Text("Add")
                                         .font(WYDFont.bodySemibold(14))
                                         .padding(.horizontal, 16).padding(.vertical, 8)
@@ -38,16 +40,20 @@ struct FriendsView: View {
                         ForEach(vm.requests) { user in
                             personRow(user, trailing: {
                                 HStack(spacing: 8) {
-                                    Button { Task { await vm.respond(user, accept: true) } } label: {
+                                    Button {
+                                        Haptics.success(); Task { await vm.respond(user, accept: true) }
+                                    } label: {
                                         Image(systemName: "checkmark")
                                             .foregroundColor(.white).padding(8)
                                             .background(Circle().fill(Color.wydSuccess))
-                                    }.buttonStyle(.plain)
-                                    Button { Task { await vm.respond(user, accept: false) } } label: {
+                                    }.buttonStyle(.pressable)
+                                    Button {
+                                        Haptics.tap(); Task { await vm.respond(user, accept: false) }
+                                    } label: {
                                         Image(systemName: "xmark")
                                             .foregroundColor(.white).padding(8)
                                             .background(Circle().fill(Color.wydSurface2))
-                                    }.buttonStyle(.plain)
+                                    }.buttonStyle(.pressable)
                                 }
                             })
                         }
@@ -75,6 +81,9 @@ struct FriendsView: View {
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 32)
+            .animation(WYDMotion.snappy, value: vm.requests.count)
+            .animation(WYDMotion.snappy, value: vm.friends.count)
+            .animation(WYDMotion.snappy, value: vm.searchResults.count)
         }
         .background(WYDBackground())
         .navigationTitle("Friends")
@@ -141,6 +150,10 @@ struct FriendsView: View {
         }
         .padding(12)
         .wydCardBackground(.wydSurface)
+        .transition(.asymmetric(
+            insertion: .move(edge: .trailing).combined(with: .opacity),
+            removal: .scale(scale: 0.9).combined(with: .opacity)
+        ))
     }
 }
 

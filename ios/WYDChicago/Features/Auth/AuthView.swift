@@ -65,7 +65,10 @@ struct AuthView: View {
                     isLoading: vm.isLoading,
                     isEnabled: vm.canSubmit
                 ) {
-                    Task { await vm.submit() }
+                    Task {
+                        await vm.submit()
+                        if vm.errorMessage == nil { Haptics.success() } else { Haptics.error() }
+                    }
                 }
                 .shake(errorShake)
                 .appear(delay: 0.24)

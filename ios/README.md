@@ -62,10 +62,19 @@ All animation runs through one shared language in `DesignSystem/Motion.swift`:
   and auth screens.
 - **`SplashView`** (`Features/Launch/`) — animated launch: the Chicago star spins in,
   the wordmark snaps, then it cross-fades to the app.
-- **Reusable modifiers** — `.appear(delay:)` (staggered fade-in, used by the feed),
-  `.pressable` button style (tap scale), `.shake(_:)` (error feedback on login),
-  `.shimmer()`, `.pulseGlow()`. Login uses a `matchedGeometryEffect` sliding toggle and
-  the vote pill bounces with `contentTransition(.numericText())`.
+- **Reusable modifiers** — `.appear(delay:)` (staggered fade-in, used by the feed,
+  profile, and event detail), `.pressable` button style (tap scale), `.shake(_:)`
+  (error feedback on login), `.shimmer()`, `.pulseGlow()`. Login uses a
+  `matchedGeometryEffect` sliding toggle and the vote pill bounces with
+  `contentTransition(.numericText())`.
+- **`CountUpText` / `CountUp`** — numbers that tick up on appear (profile stats).
+- **`ConfettiView`** (`DesignSystem/Confetti.swift`) — a celebratory burst fired by a
+  trigger; pops when you RSVP "Going". Honors Reduce Motion.
+- **`ToastData` + `.wydToast(_:)`** (`DesignSystem/Toast.swift`) — top-anchored,
+  auto-dismissing snackbar (RSVP / save confirmations).
+- **`Haptics`** (`DesignSystem/Haptics.swift`) — one wrapper for tap/select/success
+  feedback, wired through votes, RSVPs, chips, friend requests, and login.
+- **`SkeletonEventCard`** — shimmering placeholder shown while the feed loads.
 
 The whole app talks to one **`Backend`** protocol (`Services/Backend.swift`) that mirrors
 the web `Auth` + `API` surface from canon §5. `MockBackend` and `FirebaseBackend` both

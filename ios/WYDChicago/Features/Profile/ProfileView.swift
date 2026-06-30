@@ -15,15 +15,17 @@ struct ProfileView: View {
         ScrollView {
             VStack(spacing: 18) {
                 if let user = vm.user {
-                    headerCard(user)
-                    if vm.needsVerification { verifyBanner }
-                    if appState.isAdmin { adminLink }
-                    socialRow(user)
+                    headerCard(user).appear(delay: 0.0, yOffset: 20)
+                    if vm.needsVerification { verifyBanner.appear(delay: 0.06) }
+                    if appState.isAdmin { adminLink.appear(delay: 0.10) }
+                    socialRow(user).appear(delay: 0.14)
                     eventsSection(title: "Going to 🎟️", events: vm.goingEvents,
                                   empty: "You haven't tapped into anything yet.")
+                        .appear(delay: 0.20)
                     eventsSection(title: "Saved 🔖", events: vm.savedEvents,
                                   empty: "Nothing saved. Bookmark events you're feeling.")
-                    settings
+                        .appear(delay: 0.26)
+                    settings.appear(delay: 0.32)
                 } else {
                     ProgressView().tint(.wydBrand).padding(.top, 60)
                 }
@@ -57,12 +59,14 @@ struct ProfileView: View {
                     .multilineTextAlignment(.center)
             }
             HStack(spacing: 20) {
-                stat("\(vm.friendCount)", "friends")
-                stat("\(vm.goingEvents.count)", "going")
+                statNum(vm.friendCount, "friends")
+                statNum(vm.goingEvents.count, "going")
                 stat(user.gradeYear ?? "—", "grade")
             }
             .padding(.top, 4)
-            SecondaryButton(title: "Edit profile", systemImage: "pencil") { vm.beginEdit() }
+            SecondaryButton(title: "Edit profile", systemImage: "pencil") {
+                Haptics.tap(); vm.beginEdit()
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(20)
@@ -76,18 +80,30 @@ struct ProfileView: View {
         }
     }
 
+    private func statNum(_ value: Int, _ label: String) -> some View {
+        VStack(spacing: 2) {
+            CountUp(target: value)
+                .font(WYDFont.displaySemibold(18))
+                .foregroundColor(.wydText)
+            Text(label).font(WYDFont.bodyMedium(12)).foregroundColor(.wydMuted)
+        }
+    }
+
     private var verifyBanner: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Verify your email", systemImage: "envelope.badge")
                 .font(WYDFont.bodySemibold(15)).foregroundColor(.wydGold)
             Text("You'll need a verified email to RSVP and vote. Check your inbox.")
                 .font(WYDFont.body(13)).foregroundColor(.wydMuted)
-            Button("Resend / verify now") { Task { await vm.resendVerification() } }
+            Button("Resend / verify now") {
+                Haptics.success(); Task { await vm.resendVerification() }
+            }
                 .font(WYDFont.bodySemibold(14)).foregroundColor(.wydBrand)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .wydCardBackground(.wydSurface2)
+        .pulseGlow(.wydGold)
     }
 
     private var adminLink: some View {
@@ -136,7 +152,7 @@ struct ProfileView: View {
                     NavigationLink(value: ev.id) {
                         miniRow(ev)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressable)
                 }
             }
         }

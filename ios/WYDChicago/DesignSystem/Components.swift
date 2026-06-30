@@ -340,6 +340,47 @@ struct WYDBackground: View {
     }
 }
 
+// MARK: SkeletonEventCard — shimmering placeholder while the feed loads
+
+struct SkeletonEventCard: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            RoundedRectangle(cornerRadius: 0)
+                .fill(Color.wydSurface2)
+                .frame(height: 150)
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: WYDRadius.card,
+                        topTrailingRadius: WYDRadius.card,
+                        style: .continuous
+                    )
+                )
+            VStack(alignment: .leading, spacing: 10) {
+                bar(width: 0.7, height: 18)
+                bar(width: 0.45, height: 12)
+                HStack {
+                    Capsule().fill(Color.wydSurface2).frame(width: 90, height: 22)
+                    Spacer()
+                    Capsule().fill(Color.wydSurface2).frame(width: 44, height: 22)
+                }
+            }
+            .padding(14)
+        }
+        .wydCardBackground()
+        .redacted(reason: .placeholder)
+        .shimmer()
+    }
+
+    private func bar(width: CGFloat, height: CGFloat) -> some View {
+        GeometryReader { geo in
+            Capsule()
+                .fill(Color.wydSurface2)
+                .frame(width: geo.size.width * width, height: height)
+        }
+        .frame(height: height)
+    }
+}
+
 // MARK: Empty state
 
 struct EmptyStateView: View {

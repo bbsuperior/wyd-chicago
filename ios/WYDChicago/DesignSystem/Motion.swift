@@ -22,6 +22,44 @@ enum WYDMotion {
     }
 }
 
+// MARK: - CountUpText: animates an integer ticking up to its value
+
+/// A number that counts up to `value` when it first appears (or when `value`
+/// changes inside an animation). Style it like any Text via modifiers.
+struct CountUpText: View, Animatable {
+    var value: Double
+    var suffix: String = ""
+
+    var animatableData: Double {
+        get { value }
+        set { value = newValue }
+    }
+
+    var body: some View {
+        Text("\(Int(value.rounded()))\(suffix)")
+            .monospacedDigit()
+    }
+}
+
+/// Counts up from 0 → `target` on appear.
+struct CountUp: View {
+    let target: Int
+    var suffix: String = ""
+    var duration: Double = 0.9
+    @State private var shown: Double = 0
+
+    var body: some View {
+        CountUpText(value: shown, suffix: suffix)
+            .onAppear {
+                shown = 0
+                withAnimation(.easeOut(duration: duration)) { shown = Double(target) }
+            }
+            .onChange(of: target) { new in
+                withAnimation(.easeOut(duration: duration)) { shown = Double(new) }
+            }
+    }
+}
+
 // MARK: - Reusable transitions
 
 extension AnyTransition {
