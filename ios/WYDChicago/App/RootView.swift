@@ -8,11 +8,20 @@ enum RootTab: Hashable {
 
 struct RootView: View {
     @EnvironmentObject private var appState: AppState
+    @State private var showAssistant = false
 
     var body: some View {
         Group {
             if appState.isSignedIn {
                 mainTabs
+                    .overlay(alignment: .bottomTrailing) {
+                        AssistantFab { showAssistant = true }
+                            .padding(.trailing, 16)
+                            .padding(.bottom, 70)   // clear the tab bar
+                    }
+                    .sheet(isPresented: $showAssistant) {
+                        AssistantView().environmentObject(appState)
+                    }
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .scale(scale: 0.96)),
                         removal: .opacity
@@ -65,6 +74,32 @@ struct RootView: View {
             .tag(RootTab.profile)
         }
         .tint(.wydBrand)
+    }
+}
+
+// MARK: - Floating "Ask WYD AI" button
+
+struct AssistantFab: View {
+    let action: () -> Void
+    @State private var appeared = false
+
+    var body: some View {
+        Button {
+            Haptics.tap()
+            action()
+        } label: {
+            Image(systemName: "sparkles")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(.white)
+                .frame(width: 56, height: 56)
+                .background(Circle().fill(LinearGradient.cityNight))
+        }
+        .buttonStyle(.pressable)
+        .pulseGlow(.wydBrand2)
+        .scaleEffect(appeared ? 1 : 0.2)
+        .opacity(appeared ? 1 : 0)
+        .onAppear { withAnimation(WYDMotion.bouncy.delay(0.4)) { appeared = true } }
+        .accessibilityLabel("Ask WYD AI")
     }
 }
 

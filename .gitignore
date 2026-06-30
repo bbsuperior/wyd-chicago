@@ -11,6 +11,10 @@ ui-debug.log
 # iOS — Firebase plist holds the app's config (low-sensitivity but project-specific): keep local
 ios/**/GoogleService-Info.plist
 
+# iOS — local WYD AI key (Anthropic). Never commit a real key.
+ios/**/Secrets.plist
+*.xcconfig
+
 # --- Node / Cloud Functions ---
 node_modules/
 firebase/functions/lib/

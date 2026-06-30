@@ -80,6 +80,30 @@ The whole app talks to one **`Backend`** protocol (`Services/Backend.swift`) tha
 the web `Auth` + `API` surface from canon §5. `MockBackend` and `FirebaseBackend` both
 conform to it — exactly how the web swaps `data.js` ↔ `firebase.js` via `backend.js`.
 
+### WYD AI — the in-app assistant
+
+The sparkles button (bottom-right, over the tabs) opens a chat with **WYD AI**, an
+assistant that helps teens find something to do. It follows the same swap pattern as the
+backend, behind one `AssistantService` protocol (`Services/Assistant.swift`):
+
+- **`ClaudeAssistant`** (`Services/ClaudeAssistant.swift`) — calls the Claude **Messages
+  API** natively over `URLSession` (there's no official Anthropic Swift SDK), with the
+  **web search** server tool enabled so it can answer with current info.
+- **`MockAssistant`** (`Services/MockAssistant.swift`) — a zero-config offline fallback so
+  the chat works (human-like, multi-message, no dashes) with no key.
+- **Long-term memory** (`MemoryStore`) persists to disk on-device. The model saves facts
+  via `remember: …` lines, which the app stores and re-injects into the system prompt every
+  session, so the assistant stays personal across launches. View/clear it from the chat's
+  ••• menu.
+- **Texting feel** — replies render as several short bubbles, revealed one at a time with a
+  typing indicator (`AssistantView` / `AssistantViewModel`). The system prompt keeps it
+  casual and dash-free.
+
+**Enable live AI:** supply `ANTHROPIC_API_KEY` via an env var, an xcconfig/CI build setting
+(wired through `project.yml`), or a git-ignored `Secrets.plist`. With no key the app stays
+in demo mode automatically. Override the model with the `ANTHROPIC_MODEL` Info.plist value
+if needed.
+
 ---
 
 ## 3. Go live: add Firebase via Swift Package Manager
