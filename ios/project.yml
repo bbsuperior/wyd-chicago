@@ -54,6 +54,9 @@ targets:
           - UIInterfaceOrientationPortrait
         UIUserInterfaceStyle: Dark   # dark-first (canon §2)
         ITSAppUsesNonExemptEncryption: false
+        # WYD AI assistant key (optional). Supply it via an xcconfig / CI build
+        # setting or an env var; left blank the app runs the offline MockAssistant.
+        ANTHROPIC_API_KEY: "$(ANTHROPIC_API_KEY)"
         # Custom fonts (bundle the TTFs under WYDChicago/Resources/Fonts — see README):
         UIAppFonts:
           - SpaceGrotesk-Medium.ttf
@@ -68,6 +71,8 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_PREVIEWS: YES
+        # Default empty; override in an xcconfig or CI to enable live AI.
+        ANTHROPIC_API_KEY: ""
     # dependencies:
     #   - package: Firebase
     #     product: FirebaseAuth

@@ -11,6 +11,7 @@ import SwiftUI
 struct WYDChicagoApp: App {
 
     @StateObject private var appState: AppState
+    @State private var showSplash = true
 
     init() {
         // --- Firebase bootstrap (uncomment after adding Firebase via SPM) ---
@@ -23,10 +24,18 @@ struct WYDChicagoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environmentObject(appState)
-                .tint(.wydBrand)
-                .preferredColorScheme(.dark)   // dark-first
+            ZStack {
+                RootView()
+                    .environmentObject(appState)
+                    .tint(.wydBrand)
+
+                if showSplash {
+                    SplashView { withAnimation(WYDMotion.fade) { showSplash = false } }
+                        .transition(.opacity)
+                        .zIndex(1)
+                }
+            }
+            .preferredColorScheme(.dark)   // dark-first
         }
     }
 }

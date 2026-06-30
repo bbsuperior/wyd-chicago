@@ -6,6 +6,8 @@ struct AuthView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var vm: AuthViewModel
     @State private var didLoad = false
+    @State private var errorShake = 0
+    @Namespace private var toggleNS
 
     init() {
         _vm = StateObject(wrappedValue: AuthViewModel(backend: MockBackend()))
@@ -20,33 +22,41 @@ struct AuthView: View {
                     Text(vm.mode == .signIn ? "WYD tonight?" : "Make your account")
                         .font(WYDFont.displaySemibold(18))
                         .foregroundColor(.wydMuted)
+                        .contentTransition(.opacity)
+                        .animation(WYDMotion.fade, value: vm.mode)
                 }
                 .padding(.bottom, 4)
+                .appear(delay: 0.05, yOffset: 22)
 
                 modeToggle
+                    .appear(delay: 0.12)
 
                 VStack(spacing: 12) {
                     if vm.mode == .signUp {
                         field("Your name", text: $vm.displayName, icon: "person")
+                            .transition(.signUpField)
                         field("Username (lowercase)", text: $vm.username, icon: "at",
                               autocaps: false)
+                            .transition(.signUpField)
                     }
                     field("Email", text: $vm.email, icon: "envelope",
                           keyboard: .emailAddress, autocaps: false)
                     secureField("Password", text: $vm.password, icon: "lock")
 
                     if vm.mode == .signUp {
-                        birthYearPicker
-                        interestPicker
-                        ageGate
+                        birthYearPicker.transition(.signUpField)
+                        interestPicker.transition(.signUpField)
+                        ageGate.transition(.signUpField)
                     }
                 }
+                .appear(delay: 0.18)
 
                 if let err = vm.errorMessage {
                     Text(err)
                         .font(WYDFont.bodyMedium(14))
                         .foregroundColor(.wydDanger)
                         .multilineTextAlignment(.center)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
                 PrimaryButton(
@@ -55,13 +65,19 @@ struct AuthView: View {
                     isLoading: vm.isLoading,
                     isEnabled: vm.canSubmit
                 ) {
-                    Task { await vm.submit() }
+                    Task {
+                        await vm.submit()
+                        if vm.errorMessage == nil { Haptics.success() } else { Haptics.error() }
+                    }
                 }
+                .shake(errorShake)
+                .appear(delay: 0.24)
 
                 if vm.mode == .signIn {
                     Button("Forgot password?") { Task { await vm.resetPassword() } }
                         .font(WYDFont.bodyMedium(14))
                         .foregroundColor(.wydMuted)
+                        .transition(.opacity)
                 }
 
                 Text("By tapping in you confirm you're 13+ and agree to keep it chill.\nDemo content is fictional.")
@@ -72,8 +88,13 @@ struct AuthView: View {
             }
             .padding(.horizontal, 22)
             .padding(.bottom, 32)
+            .animation(WYDMotion.smooth, value: vm.mode)
+            .animation(WYDMotion.snappy, value: vm.errorMessage)
         }
-        .background(WYDBackground())
+        .background(AuroraBackground())
+        .onChange(of: vm.errorMessage) { msg in
+            if msg != nil { errorShake += 1 }
+        }
         .task {
             guard !didLoad else { return }
             didLoad = true
@@ -94,14 +115,22 @@ struct AuthView: View {
     }
 
     private func toggleButton(_ title: String, _ m: AuthViewModel.Mode) -> some View {
-        Button { withAnimation { vm.mode = m } } label: {
+        Button {
+            withAnimation(WYDMotion.snappy) { vm.mode = m }
+        } label: {
             Text(title)
                 .font(WYDFont.bodySemibold(15))
                 .foregroundColor(vm.mode == m ? .white : .wydMuted)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 9)
                 .background(
-                    Capsule().fill(vm.mode == m ? AnyShapeStyle(LinearGradient.cityNight) : AnyShapeStyle(Color.clear))
+                    ZStack {
+                        if vm.mode == m {
+                            Capsule()
+                                .fill(LinearGradient.cityNight)
+                                .matchedGeometryEffect(id: "toggle", in: toggleNS)
+                        }
+                    }
                 )
         }
         .buttonStyle(.plain)

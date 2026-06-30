@@ -41,20 +41,68 @@ folder in. XcodeGen is just the tidy path.
 ios/
 ├─ project.yml                # XcodeGen spec (bundle id, iOS 16, Firebase SPM refs ready)
 └─ WYDChicago/
-   ├─ App/                    # @main App, RootView (TabView), AppState (session + service)
+   ├─ App/                    # @main App (splash → root), RootView (TabView), AppState
    ├─ Models/                 # Codable structs mirroring canon §4 + enums
    ├─ Services/               # Backend protocol, MockBackend, FirebaseBackend stub, Recommend
-   ├─ DesignSystem/           # Theme (colors/gradient/radii), Typography, Components
-   ├─ Features/<Screen>/      # View + ViewModel per screen
+   ├─ DesignSystem/           # Theme, Typography, Components, Motion (animation language)
+   ├─ Features/<Screen>/      # View + ViewModel per screen (incl. Launch/SplashView)
    └─ Resources/              # Assets.xcassets (AppIcon), Fonts/
 ```
 
 Tabs (canon §3): **Feed · Search · ➕ Create (host/admin only) · Friends · Profile**.
 Admin dashboard and Event detail are pushed as navigation destinations.
 
+### Motion & animation
+
+All animation runs through one shared language in `DesignSystem/Motion.swift`:
+
+- **Spring tokens** — `WYDMotion.snappy / .smooth / .bouncy / .fade` so everything
+  moves with the same personality.
+- **`AuroraBackground`** — slow-drifting blurred "city night" orbs behind the launch
+  and auth screens.
+- **`SplashView`** (`Features/Launch/`) — animated launch: the Chicago star spins in,
+  the wordmark snaps, then it cross-fades to the app.
+- **Reusable modifiers** — `.appear(delay:)` (staggered fade-in, used by the feed,
+  profile, and event detail), `.pressable` button style (tap scale), `.shake(_:)`
+  (error feedback on login), `.shimmer()`, `.pulseGlow()`. Login uses a
+  `matchedGeometryEffect` sliding toggle and the vote pill bounces with
+  `contentTransition(.numericText())`.
+- **`CountUpText` / `CountUp`** — numbers that tick up on appear (profile stats).
+- **`ConfettiView`** (`DesignSystem/Confetti.swift`) — a celebratory burst fired by a
+  trigger; pops when you RSVP "Going". Honors Reduce Motion.
+- **`ToastData` + `.wydToast(_:)`** (`DesignSystem/Toast.swift`) — top-anchored,
+  auto-dismissing snackbar (RSVP / save confirmations).
+- **`Haptics`** (`DesignSystem/Haptics.swift`) — one wrapper for tap/select/success
+  feedback, wired through votes, RSVPs, chips, friend requests, and login.
+- **`SkeletonEventCard`** — shimmering placeholder shown while the feed loads.
+
 The whole app talks to one **`Backend`** protocol (`Services/Backend.swift`) that mirrors
 the web `Auth` + `API` surface from canon §5. `MockBackend` and `FirebaseBackend` both
 conform to it — exactly how the web swaps `data.js` ↔ `firebase.js` via `backend.js`.
+
+### WYD AI — the in-app assistant
+
+The sparkles button (bottom-right, over the tabs) opens a chat with **WYD AI**, an
+assistant that helps teens find something to do. It follows the same swap pattern as the
+backend, behind one `AssistantService` protocol (`Services/Assistant.swift`):
+
+- **`ClaudeAssistant`** (`Services/ClaudeAssistant.swift`) — calls the Claude **Messages
+  API** natively over `URLSession` (there's no official Anthropic Swift SDK), with the
+  **web search** server tool enabled so it can answer with current info.
+- **`MockAssistant`** (`Services/MockAssistant.swift`) — a zero-config offline fallback so
+  the chat works (human-like, multi-message, no dashes) with no key.
+- **Long-term memory** (`MemoryStore`) persists to disk on-device. The model saves facts
+  via `remember: …` lines, which the app stores and re-injects into the system prompt every
+  session, so the assistant stays personal across launches. View/clear it from the chat's
+  ••• menu.
+- **Texting feel** — replies render as several short bubbles, revealed one at a time with a
+  typing indicator (`AssistantView` / `AssistantViewModel`). The system prompt keeps it
+  casual and dash-free.
+
+**Enable live AI:** supply `ANTHROPIC_API_KEY` via an env var, an xcconfig/CI build setting
+(wired through `project.yml`), or a git-ignored `Secrets.plist`. With no key the app stays
+in demo mode automatically. Override the model with the `ANTHROPIC_MODEL` Info.plist value
+if needed.
 
 ---
 

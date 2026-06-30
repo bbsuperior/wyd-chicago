@@ -57,9 +57,11 @@ struct PrimaryButton: View {
                     .fill(LinearGradient.cityNight)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .opacity(isEnabled && !isLoading ? 1 : 0.5)
         .disabled(!isEnabled || isLoading)
+        .animation(WYDMotion.snappy, value: isLoading)
+        .animation(WYDMotion.snappy, value: isEnabled)
         .wydPrimaryGlow()
     }
 }
@@ -90,7 +92,7 @@ struct SecondaryButton: View {
                     .stroke(Color.wydBorder, lineWidth: 1)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
     }
 }
 
@@ -117,9 +119,11 @@ struct ChipView: View {
         .overlay(
             Capsule().stroke(isSelected ? accent : Color.wydBorder, lineWidth: 1)
         )
+        .scaleEffect(isSelected ? 1.06 : 1)
+        .animation(WYDMotion.bouncy, value: isSelected)
 
         if let action {
-            Button(action: action) { content }.buttonStyle(.plain)
+            Button(action: action) { content }.buttonStyle(.pressable)
         } else {
             content
         }
@@ -187,17 +191,22 @@ struct VotePill: View {
             Button { onVote(myVote == .up ? .none : .up) } label: {
                 Image(systemName: myVote == .up ? "flame.fill" : "flame")
                     .foregroundColor(myVote == .up ? .wydGold : .wydMuted)
+                    .scaleEffect(myVote == .up ? 1.25 : 1)
             }
             Text("\(score)")
                 .font(WYDFont.bodySemibold(15))
                 .foregroundColor(score >= 0 ? .wydText : .wydMuted)
                 .frame(minWidth: 22)
+                .contentTransition(.numericText())
             Button { onVote(myVote == .down ? .none : .down) } label: {
                 Image(systemName: myVote == .down ? "hand.thumbsdown.fill" : "hand.thumbsdown")
                     .foregroundColor(myVote == .down ? .wydAccent : .wydMuted)
+                    .scaleEffect(myVote == .down ? 1.25 : 1)
             }
         }
         .buttonStyle(.plain)
+        .animation(WYDMotion.bouncy, value: myVote)
+        .animation(WYDMotion.snappy, value: score)
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .background(Capsule().fill(Color.wydSurface2))
@@ -328,6 +337,47 @@ struct WYDBackground: View {
             .ignoresSafeArea()
         }
         .ignoresSafeArea()
+    }
+}
+
+// MARK: SkeletonEventCard — shimmering placeholder while the feed loads
+
+struct SkeletonEventCard: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            RoundedRectangle(cornerRadius: 0)
+                .fill(Color.wydSurface2)
+                .frame(height: 150)
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: WYDRadius.card,
+                        topTrailingRadius: WYDRadius.card,
+                        style: .continuous
+                    )
+                )
+            VStack(alignment: .leading, spacing: 10) {
+                bar(width: 0.7, height: 18)
+                bar(width: 0.45, height: 12)
+                HStack {
+                    Capsule().fill(Color.wydSurface2).frame(width: 90, height: 22)
+                    Spacer()
+                    Capsule().fill(Color.wydSurface2).frame(width: 44, height: 22)
+                }
+            }
+            .padding(14)
+        }
+        .wydCardBackground()
+        .redacted(reason: .placeholder)
+        .shimmer()
+    }
+
+    private func bar(width: CGFloat, height: CGFloat) -> some View {
+        GeometryReader { geo in
+            Capsule()
+                .fill(Color.wydSurface2)
+                .frame(width: geo.size.width * width, height: height)
+        }
+        .frame(height: height)
     }
 }
 
