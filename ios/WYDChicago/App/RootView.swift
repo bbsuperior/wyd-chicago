@@ -13,11 +13,20 @@ struct RootView: View {
         Group {
             if appState.isSignedIn {
                 mainTabs
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .scale(scale: 0.96)),
+                        removal: .opacity
+                    ))
             } else {
                 AuthView()
+                    .transition(.asymmetric(
+                        insertion: .opacity,
+                        removal: .opacity.combined(with: .scale(scale: 1.04))
+                    ))
             }
         }
         .background(WYDBackground())
+        .animation(WYDMotion.smooth, value: appState.isSignedIn)
     }
 
     private var mainTabs: some View {

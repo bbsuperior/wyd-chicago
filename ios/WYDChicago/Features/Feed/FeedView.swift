@@ -32,14 +32,15 @@ struct FeedView: View {
                         subtitle: "Try a different filter, or check back later — the city's always cooking something up."
                     )
                 } else {
-                    ForEach(vm.events) { event in
+                    ForEach(Array(vm.events.enumerated()), id: \.element.id) { index, event in
                         NavigationLink(value: event.id) {
                             EventCardView(
                                 event: event,
                                 friendsGoing: vm.friendsGoingByEvent[event.id] ?? []
                             )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressable)
+                        .appear(delay: WYDMotion.stagger(index), yOffset: 24)
                     }
                 }
             }

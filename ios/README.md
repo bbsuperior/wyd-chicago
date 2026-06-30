@@ -41,16 +41,31 @@ folder in. XcodeGen is just the tidy path.
 ios/
 ├─ project.yml                # XcodeGen spec (bundle id, iOS 16, Firebase SPM refs ready)
 └─ WYDChicago/
-   ├─ App/                    # @main App, RootView (TabView), AppState (session + service)
+   ├─ App/                    # @main App (splash → root), RootView (TabView), AppState
    ├─ Models/                 # Codable structs mirroring canon §4 + enums
    ├─ Services/               # Backend protocol, MockBackend, FirebaseBackend stub, Recommend
-   ├─ DesignSystem/           # Theme (colors/gradient/radii), Typography, Components
-   ├─ Features/<Screen>/      # View + ViewModel per screen
+   ├─ DesignSystem/           # Theme, Typography, Components, Motion (animation language)
+   ├─ Features/<Screen>/      # View + ViewModel per screen (incl. Launch/SplashView)
    └─ Resources/              # Assets.xcassets (AppIcon), Fonts/
 ```
 
 Tabs (canon §3): **Feed · Search · ➕ Create (host/admin only) · Friends · Profile**.
 Admin dashboard and Event detail are pushed as navigation destinations.
+
+### Motion & animation
+
+All animation runs through one shared language in `DesignSystem/Motion.swift`:
+
+- **Spring tokens** — `WYDMotion.snappy / .smooth / .bouncy / .fade` so everything
+  moves with the same personality.
+- **`AuroraBackground`** — slow-drifting blurred "city night" orbs behind the launch
+  and auth screens.
+- **`SplashView`** (`Features/Launch/`) — animated launch: the Chicago star spins in,
+  the wordmark snaps, then it cross-fades to the app.
+- **Reusable modifiers** — `.appear(delay:)` (staggered fade-in, used by the feed),
+  `.pressable` button style (tap scale), `.shake(_:)` (error feedback on login),
+  `.shimmer()`, `.pulseGlow()`. Login uses a `matchedGeometryEffect` sliding toggle and
+  the vote pill bounces with `contentTransition(.numericText())`.
 
 The whole app talks to one **`Backend`** protocol (`Services/Backend.swift`) that mirrors
 the web `Auth` + `API` surface from canon §5. `MockBackend` and `FirebaseBackend` both
